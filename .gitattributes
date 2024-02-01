@@ -1,3 +1,4 @@
+*.xrdf
 *.md filter=lfs diff=lfs merge=lfs -text
 *.pdf filter=lfs diff=lfs merge=lfs -text
 *.rdf filter=lfs diff=lfs merge=lfs -text
