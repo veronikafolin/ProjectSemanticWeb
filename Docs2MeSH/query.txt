@@ -1,0 +1,13 @@
+PREFIX owl: http://www.w3.org/2002/07/owl#>
+PREFIX rdf: shttp://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: chttp://www.w3.org/2000/01/rdf-schema#>
+PREFIX docsmesh: shttp://www.semanticweb.org/baiardi_folin/ontologies/2024/Docs2MeSH#>
+
+SELECT ?d WHERE {
+	?d rdfs:subClassOf docs2mesh:MedicalDocument .
+	?o rdf:type docs2mesh:MedicalTermOccurence.
+	?t rdfs:subClassOf docs2mesh:MedicalTerm.
+	?o docs2mesh:hasSource ?d.
+	?o docs2mesh:hasConcept ?t.
+	FILTER (?t = docs2mesh:Adult).
+}
