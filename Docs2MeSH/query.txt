@@ -1,13 +1,68 @@
-PREFIX owl: http://www.w3.org/2002/07/owl#>
-PREFIX rdf: shttp://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs: chttp://www.w3.org/2000/01/rdf-schema#>
-PREFIX docsmesh: shttp://www.semanticweb.org/baiardi_folin/ontologies/2024/Docs2MeSH#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX docs2mesh: <http://www.semanticweb.org/baiardi_folin/ontologies/2024/Docs2MeSH#>
+PREFIX mesh: <http://phenomebrowser.net/ontologies/mesh/mesh.owl#>
 
-SELECT ?d WHERE {
-	?d rdfs:subClassOf docs2mesh:MedicalDocument .
+% to list documents that have a certain term
+SELECT ?label WHERE {
+	?d rdf:type docs2mesh:MedicalDocument.
+	?d rdfs:label ?label.
 	?o rdf:type docs2mesh:MedicalTermOccurence.
-	?t rdfs:subClassOf docs2mesh:MedicalTerm.
 	?o docs2mesh:hasSource ?d.
 	?o docs2mesh:hasConcept ?t.
-	FILTER (?t = docs2mesh:Adult).
+	FILTER (?t = docs2mesh:Adult)
 }
+
+% to list documents that have a certain term, ordered by date
+SELECT ?label ?date WHERE {
+	?d rdf:type docs2mesh:MedicalDocument.
+	?d rdfs:label ?label.
+	?o rdf:type docs2mesh:MedicalTermOccurence.
+	?o docs2mesh:hasSource ?d.
+	?o docs2mesh:hasConcept ?t.
+	?d docs2mesh:hasPublicationDate ?date.
+	FILTER (?t = docs2mesh:Adult)
+}
+ORDER BY DESC (?date)
+
+% to list terms and meanings present in documents
+SELECT ?t ?m ?label WHERE {
+	?d rdf:type docs2mesh:MedicalDocument.
+	?d rdfs:label ?label.
+	?o rdf:type docs2mesh:MedicalTermOccurence.
+	?m rdf:type docs2mesh:MedicalMeaning.
+	?o docs2mesh:hasSource ?d.
+	?o docs2mesh:hasConcept ?t.
+	?o docs2mesh:hasMeaning ?m.
+}
+ORDER BY ?t ?m
+
+% list terms 
+SELECT DISTINCT ?t WHERE {
+	?o rdf:type docs2mesh:MedicalTermsOccurance.
+	?o docs2mesh:hasConcept ?t.
+}
+
+
+% count documents by year that cite a term
+SELECT ?t ?year (COUNT(?d) as ?count_documents) WHERE {
+	?d rdf:type docs2mesh:MedicalDocument.
+	?o rdf:type docs2mesh:MedicalTermOccurence.
+	?o docs2mesh:hasSource ?d.
+	?o docs2mesh:hasConcept ?t.
+	?d docs2mesh:hasPublicationDate ?date.
+	BIND(SUBSTR(str(?date), 0, 4) AS ?year)
+}
+GROUP BY ?t ?year
+ORDER BY ?t
+
+% select documents that contains a term that belongs to a certain mesh category
+SELECT ?d ?t WHERE {
+	?d rdf:type docs2mesh:MedicalDocument.
+	?o rdf:type docs2mesh:MedicalTermOccurence.
+	?t rdf:type mesh:C14.
+	?o docs2mesh:hasSource ?d.
+	?o docs2mesh:hasConcept ?t.
+}
+
