@@ -4,65 +4,83 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX docs2mesh: <http://www.semanticweb.org/baiardi_folin/ontologies/2024/Docs2MeSH#>
 PREFIX mesh: <http://phenomebrowser.net/ontologies/mesh/mesh.owl#>
 
-% to list documents that have a certain term
+% list documents, ordered by date
+SELECT ?label (STR(?pmid) as ?id) (SUBSTR(STR(?date), 0, 10) AS ?publicationDate) WHERE {
+	?d rdf:type docs2mesh:MedicalDocument.
+	?d rdfs:label ?label.
+	?d docs2mesh:hasPublicationDate ?date.
+	OPTIONAL {?d docs2mesh:hasPMID ?pmid.}
+}
+ORDER BY DESC (?date)
+
+% list terms 
+SELECT DISTINCT ?medicalTerm WHERE {
+	?o rdf:type docs2mesh:MedicalTermOccurence.
+	?o docs2mesh:hasConcept ?medicalTerm.
+}
+
+% to list meanings present in documents
+SELECT DISTINCT ?meaning WHERE {
+	?o rdf:type docs2mesh:MedicalTermOccurence.
+	?meaning rdf:type docs2mesh:MedicalMeaning.
+	?o docs2mesh:hasMeaning ?meaning.
+}
+ORDER BY ASC (?meaning)
+
+% to list documents that have a certain MedicalTerm
+SELECT ?label ?meaning WHERE {
+	?d rdf:type docs2mesh:MedicalDocument.
+	?d rdfs:label ?label.
+	?o rdf:type docs2mesh:MedicalTermOccurence.
+	?o docs2mesh:hasSource ?d.
+	?o docs2mesh:hasConcept ?t.
+	OPTIONAL {?o docs2mesh:hasMeaning ?meaning}
+	FILTER (?t = docs2mesh:Adult)
+}
+
+% to list documents that have a certain MedicalTerm with a certain meaning
 SELECT ?label WHERE {
 	?d rdf:type docs2mesh:MedicalDocument.
 	?d rdfs:label ?label.
 	?o rdf:type docs2mesh:MedicalTermOccurence.
 	?o docs2mesh:hasSource ?d.
 	?o docs2mesh:hasConcept ?t.
-	FILTER (?t = docs2mesh:Adult)
+	?o docs2mesh:hasMeaning ?meaning.
+	FILTER (?t = docs2mesh:Breast_Neoplasms && ?meaning = docs2mesh:metabolism)
 }
-
-% to list documents that have a certain term, ordered by date
-SELECT ?label ?date WHERE {
-	?d rdf:type docs2mesh:MedicalDocument.
-	?d rdfs:label ?label.
-	?o rdf:type docs2mesh:MedicalTermOccurence.
-	?o docs2mesh:hasSource ?d.
-	?o docs2mesh:hasConcept ?t.
-	?d docs2mesh:hasPublicationDate ?date.
-	FILTER (?t = docs2mesh:Adult)
-}
-ORDER BY DESC (?date)
-
-% to list terms and meanings present in documents
-SELECT ?t ?m ?label WHERE {
-	?d rdf:type docs2mesh:MedicalDocument.
-	?d rdfs:label ?label.
-	?o rdf:type docs2mesh:MedicalTermOccurence.
-	?m rdf:type docs2mesh:MedicalMeaning.
-	?o docs2mesh:hasSource ?d.
-	?o docs2mesh:hasConcept ?t.
-	?o docs2mesh:hasMeaning ?m.
-}
-ORDER BY ?t ?m
-
-% list terms 
-SELECT DISTINCT ?t WHERE {
-	?o rdf:type docs2mesh:MedicalTermsOccurance.
-	?o docs2mesh:hasConcept ?t.
-}
-
-
-% count documents by year that cite a term
-SELECT ?t ?year (COUNT(?d) as ?count_documents) WHERE {
-	?d rdf:type docs2mesh:MedicalDocument.
-	?o rdf:type docs2mesh:MedicalTermOccurence.
-	?o docs2mesh:hasSource ?d.
-	?o docs2mesh:hasConcept ?t.
-	?d docs2mesh:hasPublicationDate ?date.
-	BIND(SUBSTR(str(?date), 0, 4) AS ?year)
-}
-GROUP BY ?t ?year
-ORDER BY ?t
 
 % select documents that contains a term that belongs to a certain mesh category
-SELECT ?d ?t WHERE {
+SELECT ?label ?medicalTerm ?meaning WHERE {
 	?d rdf:type docs2mesh:MedicalDocument.
+	?d rdfs:label ?label.
 	?o rdf:type docs2mesh:MedicalTermOccurence.
 	?t rdf:type mesh:C14.
 	?o docs2mesh:hasSource ?d.
-	?o docs2mesh:hasConcept ?t.
+	?o docs2mesh:hasConcept ?medicalTerm.
+	OPTIONAL {?o docs2mesh:hasMeaning ?meaning}
 }
+
+% count documents by year and by term
+SELECT ?medicalTerm ?year (COUNT(?d) as ?count_documents) WHERE {
+	?d rdf:type docs2mesh:MedicalDocument.
+	?o rdf:type docs2mesh:MedicalTermOccurence.
+	?o docs2mesh:hasSource ?d.
+	?o docs2mesh:hasConcept ?medicalTerm.
+	?d docs2mesh:hasPublicationDate ?date.
+	BIND(SUBSTR(str(?date), 0, 4) AS ?year)
+}
+GROUP BY ?medicalTerm ?year
+ORDER BY ?medicalTerm
+--------------------
+SELECT ?medicalTerm ?year (COUNT(?d) as ?count_documents) WHERE {
+	?d rdf:type docs2mesh:MedicalDocument.
+	?o rdf:type docs2mesh:MedicalTermOccurence.
+	?o docs2mesh:hasSource ?d.
+	?o docs2mesh:hasConcept ?medicalTerm.
+	?d docs2mesh:hasPublicationDate ?date.
+	BIND(YEAR(?date) AS ?year)
+}
+GROUP BY ?medicalTerm ?year
+ORDER BY ?medicalTerm
+
 
