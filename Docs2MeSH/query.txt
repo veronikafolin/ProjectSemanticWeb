@@ -35,7 +35,7 @@ SELECT ?label ?meaning WHERE {
 	?o docs2mesh:hasSource ?d.
 	?o docs2mesh:hasConcept ?t.
 	OPTIONAL {?o docs2mesh:hasMeaning ?meaning}
-	FILTER (?t = docs2mesh:Adult)
+	FILTER (?t = docs2mesh:Transcription_Factors)
 }
 
 % to list documents that have a certain MedicalTerm with a certain meaning
@@ -54,7 +54,7 @@ SELECT ?label ?medicalTerm ?meaning WHERE {
 	?d rdf:type docs2mesh:MedicalDocument.
 	?d rdfs:label ?label.
 	?o rdf:type docs2mesh:MedicalTermOccurence.
-	?t rdf:type mesh:C14.
+	?medicalTerm rdf:type mesh:C14.
 	?o docs2mesh:hasSource ?d.
 	?o docs2mesh:hasConcept ?medicalTerm.
 	OPTIONAL {?o docs2mesh:hasMeaning ?meaning}
